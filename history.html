@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Trade History</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{ background:#0f1115; color:#e6edf3; font-family:'Inter',sans-serif; padding:20px; }
+h1{ font-size:26px; margin-bottom:20px; }
+table{ width:100%; border-collapse:collapse; background:#1f2128; border-radius:10px; overflow:hidden; }
+th,td{ padding:12px; text-align:left; }
+th{ background:#181a20; color:#00cc66; font-size:16px; }
+tr:nth-child(even){ background:rgba(255,255,255,0.05); }
+tr:hover{ background:rgba(0,204,102,0.1); }
+.profit{ color:#00ff88; font-weight:600; }
+.loss{ color:#ff5555; font-weight:600; }
+.backBtn{ margin-top:20px; padding:10px 16px; border:none; border-radius:6px; background:#1e90ff; color:#fff; font-size:15px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<h1 id="title">Trade History</h1>
+<table>
+  <thead>
+    <tr><th>Day</th><th>Action</th><th>Company</th><th>Price</th><th>Quantity</th><th>P/L</th></tr>
+  </thead>
+  <tbody id="historyBody"></tbody>
+</table>
+<button class="backBtn" onclick="window.location.href='Sparkx.html'">⬅ Back</button>
+
+<script>
+const user = localStorage.getItem('selectedUser');
+const historyData = JSON.parse(localStorage.getItem('tradeHistory')||'{}');
+document.getElementById('title').textContent = user + "'s Trade History";
+
+const tbody = document.getElementById('historyBody');
+if(historyData[user]){
+  historyData[user].forEach(t=>{
+    const tr=document.createElement('tr');
+    const profitLoss = t.type==='SELL' ? (t.price * t.qty).toFixed(2) : '-';
+    tr.innerHTML = `
+      <td>${t.day}</td>
+      <td>${t.type}</td>
+      <td>${t.company}</td>
+      <td>$${t.price.toFixed(2)}</td>
+      <td>${t.qty}</td>
+      <td class="${t.type==='SELL'?(profitLoss>0?'profit':'loss'):''}">
+        ${profitLoss==='-'?'-':"$"+profitLoss}
+      </td>
+    `;
+    tbody.append(tr);
+  });
+}else{
+  tbody.innerHTML=`<tr><td colspan="6">No trades recorded for this user.</td></tr>`;
+}
+</script>
+</body>
+</html>

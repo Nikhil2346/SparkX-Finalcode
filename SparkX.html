@@ -1,0 +1,970 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Simulator - 2008 Crisis</title>
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial/dist/chartjs-chart-financial.min.js"></script>
+
+<style>
+:root{
+  --bg: #0f1115;
+  --panel: #181a20;
+  --card: #1f2128;
+  --accent: #00cc66;
+  --sell: #ff6600;
+  --primary: #1e90ff;
+  --text: #e6edf3;
+  --text-muted: #a0a4ad;
+  --shadow: rgba(0,0,0,0.4);
+}
+
+/* Transaction modal overlay */
+#transaction-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+#transaction-modal.show {
+  display: flex;
+}
+
+#transaction-modal .modal-content {
+  background: #1f2128;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  color: #fff;
+}
+
+#transaction-modal h2 {
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+
+#transaction-modal table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#transaction-modal th, #transaction-modal td {
+  padding: 8px;
+  border-bottom: 1px solid #444;
+}
+
+#transaction-modal th {
+  text-align: left;
+  color: #00cc66;
+}
+
+#modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+
+/* News Ticker Styles */
+#news-ticker {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  border-top: 2px solid #ff4757;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.ticker-content {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ticker-label {
+  background: #ff4757;
+  padding: 0 12px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  white-space: nowrap;
+  color: white;
+}
+
+.ticker-scroll {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+.ticker-text {
+  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: scroll-left 25s linear infinite;
+}
+
+@keyframes scroll-left {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Headline Modal Styles */
+.headline-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: modal-fade-in 0.3s ease-out;
+}
+
+.headline-modal.hidden {
+  display: none;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.headline-content {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #333;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+}
+
+.headline-content h2 {
+  font-size: 24px;
+  margin: 0 0 16px 0;
+  color: #ff4757;
+  font-weight: 700;
+}
+
+.headline-content p {
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+  color: #555;
+}
+
+.headline-btn {
+  background: linear-gradient(45deg, #ff4757, #ff6b7a);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(255, 71, 87, 0.3);
+  margin: 0 8px;
+}
+
+.headline-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(255, 71, 87, 0.4);
+}
+
+.headline-btn.secondary {
+  background: linear-gradient(45deg, #6c757d, #868e96);
+  box-shadow: 0 4px 20px rgba(108, 117, 125, 0.3);
+}
+
+.headline-btn.secondary:hover {
+  box-shadow: 0 6px 25px rgba(108, 117, 125, 0.4);
+}
+
+.endgame-content {
+  max-width: 600px;
+}
+
+.endgame-stats {
+  background: rgba(255, 71, 87, 0.1);
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.endgame-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Crash Tint Overlay */
+.crash-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 9998;
+  animation: crash-pulse 2s ease-out;
+}
+
+.crash-overlay.hidden {
+  display: none;
+}
+
+@keyframes crash-pulse {
+  0% { background: rgba(255, 0, 0, 0.25); }
+  50% { background: rgba(255, 0, 0, 0.1); }
+  100% { background: rgba(255, 0, 0, 0); }
+}
+
+*{ box-sizing:border-box; font-family:'Inter',sans-serif; margin:0; padding:0; }
+
+html, body, #app { height:100%; width:100%; background:var(--bg); color:var(--text); }
+
+#app{ display:flex; gap:20px; padding:20px; padding-bottom: 56px; /* Space for ticker */ }
+
+#left{ width:300px; display:flex; flex-direction:column; }
+
+.start-row{ display:flex; gap:10px; margin-bottom:15px; }
+.start-row input{ flex:1; padding:8px; border-radius:6px; border:1px solid #333; background:#111; color:var(--text); font-size:16px; }
+.start-row button{ padding:8px 14px; border-radius:6px; border:none; background:linear-gradient(45deg,var(--primary),#0055cc); color:#fff; cursor:pointer; font-weight:600; transition:0.3s; }
+.start-row button:hover{ background:linear-gradient(45deg,#0055cc,var(--primary)); }
+
+.meta{ margin-bottom:15px; font-size:15px; color:var(--text-muted); line-height:1.5; }
+
+#companyList{ display:flex; flex-direction:column; gap:10px; }
+
+.compRow{
+  display:flex; align-items:center;
+  padding:8px 10px; border-radius:8px; background:var(--card); box-shadow:0 4px 8px var(--shadow);
+  transition: transform 0.2s;
+}
+.compRow:hover{ transform: translateY(-2px); }
+
+.colorBox{
+  width:16px; height:16px; border-radius:4px; margin-right:6px; cursor:pointer;
+}
+
+.abbr{
+  width:50px; cursor:pointer; font-weight:600;
+}
+
+/* Modal styles */
+.scenario-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  padding: 24px;
+  animation: modalFadeOut 0.2s ease-in;
+}
+
+.scenario-modal.show {
+  display: flex;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes modalFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.95); }
+}
+
+.scenario-content {
+  width: min(500px, 90%);
+  background: linear-gradient(135deg, #1f2128 0%, #2a2d35 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1);
+  position: relative;
+  outline: none;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.scenario-close {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 18px;
+  color: #ddd;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.scenario-close:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+.scenario-content h2 { 
+  margin: 0 0 16px 0; 
+  font-size: 24px;
+  background: linear-gradient(45deg, #ff4757, #ff6b7a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.scenario-content p { 
+  margin: 0 0 24px 0; 
+  line-height: 1.6; 
+  color: #d6d6d6; 
+  font-size: 16px;
+}
+
+.scenario-actions { 
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #ff4757, #ff6b7a);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(255, 71, 87, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(255, 71, 87, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: #ddd;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+
+body.modal-open { 
+  overflow: hidden; 
+}
+
+.compRow .price{ font-weight:600; font-size:14px; min-width:80px; }
+.compRow button{ padding:6px 10px; border-radius:6px; font-weight:600; cursor:pointer; border:none; transition:0.3s; }
+.compRow .buy{ background:var(--accent); color:#000; }
+.compRow .buy:hover{ filter:brightness(1.1); }
+.compRow .sell{ background:var(--sell); color:#000; }
+.compRow .sell:hover{ filter:brightness(1.1); }
+.compRow .shares{ font-size:14px; color:var(--text-muted); margin-left:auto; }
+
+#nextDay, #allGraphBtn{
+  margin-top:10px; padding:10px; border-radius:8px; border:none; background:linear-gradient(45deg,var(--primary),#0055cc);
+  color:#fff; font-weight:600; font-size:14px; cursor:pointer; width:100%; transition:0.3s;
+}
+#nextDay:hover, #allGraphBtn:hover{ background:linear-gradient(45deg,#0055cc,var(--primary)); }
+
+#leaderboardWrap{
+  margin-top:20px; background:var(--card); padding:12px; border-radius:10px; box-shadow:0 4px 10px var(--shadow);
+}
+#leaderboard th, #leaderboard td{ padding:8px; text-align:left; font-size:14px; }
+#leaderboard th{ color:var(--accent); font-weight:600; cursor:pointer; }
+#leaderboard tbody tr:nth-child(even){ background: rgba(255,255,255,0.05); }
+#leaderboard tbody tr:hover{ background: rgba(0,204,102,0.1); cursor:pointer; }
+.leader-user{
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+#resetLeaderboard{
+  margin-top:10px; padding:8px; width:100%; border:none; border-radius:6px; background:#ff4444; color:#fff; font-weight:600; cursor:pointer; transition:0.3s;
+}
+#resetLeaderboard:hover{ background:#ff2222; }
+
+#right{ flex:1; display:flex; flex-direction:column; gap:12px; }
+
+.controls{ height:40px; }
+.controls select{ padding:8px; border-radius:6px; border:1px solid #333; background:#111; color:var(--text); font-size:15px; }
+
+#chartWrap{ flex:1; min-height:480px; background:var(--card); border-radius:12px; padding:10px; box-shadow:0 4px 12px var(--shadow); }
+
+canvas{ width:100%; height:100%; }
+
+@media(max-width:900px){
+  #app{ flex-direction:column; }
+  #left{ width:100%; }
+}
+</style>
+</head>
+
+<body>
+<!-- 2008 Crisis Scenario Modal -->
+<div id="scenarioModal" class="scenario-modal" aria-hidden="true">
+  <div class="scenario-content" role="dialog" aria-labelledby="scenarioTitle" tabindex="-1">
+    <button id="scenarioClose" class="scenario-close" aria-label="Close dialog">&times;</button>
+    <h2 id="scenarioTitle">📉 2008 Financial Crisis</h2>
+    <p>
+      The housing bubble has burst, major banks are collapsing, and panic is spreading through Wall Street. 
+      Stock prices are plummeting as investors flee to safety.
+    </p>
+    <p>
+      Your challenge: Navigate through one of the worst financial crises in history. Can you survive the crash and maybe even profit from the chaos?
+    </p>
+    <div class="scenario-actions">
+      <button id="scenarioStart" class="btn-primary">Start the Crisis</button>
+      <button id="scenarioCancel" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <aside id="left">
+    <div class="start-row">
+      <input id="username" placeholder="Enter your username" />
+      <button id="startBtn">Start</button>
+    </div>
+
+    <div class="meta">
+      <div id="dayLbl">Day 0 / 20</div>
+      <div id="balLbl">Balance: $10,000.00</div>
+    </div>
+
+    <div id="companyList"></div>
+    <button id="nextDay">Next Day</button>
+    <button id="allGraphBtn">Show All Companies</button>
+
+    <div id="leaderboardWrap">
+      <table id="leaderboard">
+        <thead><tr><th>User</th><th>Net Worth</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button id="resetLeaderboard">Reset Leaderboard</button>
+    </div>
+  </aside>
+
+  <main id="right">
+    <div class="controls">
+      <select id="selChart">
+        <option value="line">Line Chart</option>
+        <option value="candlestick">Candlestick Chart</option>
+      </select>
+    </div>
+    <div id="chartWrap">
+      <canvas id="chart"></canvas>
+    </div>
+  </main>
+</div>
+
+<!-- Transaction Modal -->
+<div id="transaction-modal" class="modal-overlay hidden" role="dialog" aria-hidden="true">
+  <div class="modal-content" role="document" aria-modal="true">
+    <button id="modal-close" class="modal-close" aria-label="Close">&times;</button>
+    <h2>Transactions for <span id="modal-user"></span></h2>
+    <table id="transaction-table" style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Stock Name</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Units</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="scenario.js"></script>
+<script>
+// ----- Configuration -----
+const COMPANIES = {
+  "Apple":150.25,"Microsoft":299.10,"Google":750.50,"Amazon":700.75,
+  "Tesla":720.30,"Netflix":590.15,"Facebook":355.40,"Nvidia":220.80,
+  "Intel":55.60,"Adobe":630.20,"IBM":140.20,"Oracle":85.50
+};
+
+const ABBR = { 
+  "Apple":"AAPL","Microsoft":"MSFT","Google":"GOOG","Amazon":"AMZN","Tesla":"TSLA",
+  "Netflix":"NFLX","Facebook":"FB","Nvidia":"NVDA","Intel":"INTC","Adobe":"ADBE",
+  "IBM":"IBM","Oracle":"ORCL" 
+};
+
+const START_BALANCE = 10000;
+const TOTAL_DAYS = 20;
+const PREV_DAYS = 6;
+const COLORS = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#00cc66','#ff6600'];
+
+// ----- Helpers -----
+function rndDelta(v){ return +(v*(1+(Math.random()*0.1-0.05))).toFixed(2); }
+function initHistory(p0, days=PREV_DAYS){ 
+  const h=[+p0.toFixed(2)]; 
+  for(let i=1;i<days;i++) h.push(rndDelta(h[h.length-1])); 
+  return h; 
+}
+
+// ----- 2008 Crash Scenario Function -----
+function applyScenarioCrash(multiplier = 0.5) {
+  console.log(`Applying 2008 crash with ${multiplier} multiplier`);
+  
+  for (const c in COMPANIES) {
+    if (!Array.isArray(history[c]) || history[c].length === 0) continue;
+    
+    const lastIndex = history[c].length - 1;
+    const originalPrice = history[c][lastIndex];
+    const crashedPrice = +(originalPrice * multiplier).toFixed(2);
+    history[c][lastIndex] = crashedPrice;
+
+    if (Array.isArray(ohlc[c]) && ohlc[c].length > 0) {
+      const lastOhlcIndex = ohlc[c].length - 1;
+      const prevClose = lastOhlcIndex > 0 ? ohlc[c][lastOhlcIndex - 1].c : crashedPrice;
+      
+      ohlc[c][lastOhlcIndex] = {
+        o: prevClose,
+        h: Math.max(prevClose, crashedPrice) + Math.random() * 5,
+        l: Math.min(prevClose, crashedPrice) - Math.random() * 10,
+        c: crashedPrice
+      };
+    }
+  }
+  
+  if (typeof refreshUI === 'function') {
+    refreshUI();
+  }
+}
+
+// Make applyMarketShock available globally for scenario.js
+window.applyMarketShock = applyScenarioCrash;
+
+// ----- State -----
+let history={}, shares={}, balance=START_BALANCE, dayPlayed=0, user=null, currentCompany=null, ohlc={}, tradeHistory={};
+let leaderboard = JSON.parse(localStorage.getItem('lb')||'{}');
+
+// Initialize data
+for(const k in COMPANIES){ 
+  history[k] = initHistory(COMPANIES[k]); 
+  shares[k] = 0; 
+  ohlc[k] = history[k].map((p,i)=>{
+    const prev = i===0? p : history[k][i-1];
+    return {o:prev, h:Math.max(prev,p)+Math.random()*5, l:Math.min(prev,p)-Math.random()*5, c:p};
+  });
+}
+
+// ----- DOM Elements -----
+let companyList, balLbl, dayLbl, startBtn, username, nextDayBtn, selChart, leaderboardBody, allGraphBtn, ctx, chart=null;
+
+// ----- Build Company Rows -----
+function buildCompanyRows(){
+  companyList.innerHTML='';
+  let i=0;
+  for(const c in COMPANIES){
+    const row = document.createElement('div'); 
+    row.className='compRow';
+
+    const colorBox = document.createElement('div'); 
+    colorBox.className='colorBox'; 
+    colorBox.style.background=COLORS[i%COLORS.length];
+    colorBox.addEventListener('click',()=>{currentCompany=c; drawChart();});
+
+    const abbr = document.createElement('div'); 
+    abbr.className='abbr'; 
+    abbr.textContent=ABBR[c];
+    abbr.addEventListener('click',()=>{currentCompany=c; drawChart();});
+
+    const price = document.createElement('div'); 
+    price.className='price'; 
+    price.dataset.company=c; 
+    price.textContent = history[c][history[c].length-1].toFixed(2);
+
+    const buy = document.createElement('button'); 
+    buy.className='buy'; 
+    buy.textContent='Buy'; 
+    buy.addEventListener('click',()=>trade(c,true));
+
+    const sell = document.createElement('button'); 
+    sell.className='sell'; 
+    sell.textContent='Sell'; 
+    sell.addEventListener('click',()=>trade(c,false));
+
+    const sh = document.createElement('div');
+    sh.className = 'shares';
+    sh.id = `shares-${c}`;
+    sh.textContent = shares[c];
+
+    row.append(colorBox,abbr,price,buy,sell,sh);
+    companyList.append(row);
+    i++;
+  }
+}
+
+// ----- Refresh UI -----
+function refreshUI(){
+  dayLbl.textContent = `Day ${dayPlayed} / ${TOTAL_DAYS}`;
+  balLbl.textContent = `Balance: ${balance.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  
+  for(const c in COMPANIES){
+    const el = document.querySelector(`.price[data-company="${c}"]`);
+    const cur = history[c][history[c].length-1];
+    const prev = history[c].length > 1 ? history[c][history[c].length-2] : cur;
+    
+    if(el){ 
+      el.textContent = cur.toFixed(2); 
+      el.style.color = cur >= prev ? '#00FF7F' : '#FF4500'; 
+    }
+    
+    const shEl = document.getElementById(`shares-${c}`);
+    if(shEl) shEl.textContent = shares[c];
+  }
+  
+  drawChart(); 
+  refreshLeader();
+}
+
+// ----- Refresh Leaderboard -----
+function refreshLeader(){
+  leaderboardBody.innerHTML = '';
+  const arr = Object.entries(leaderboard).sort((a,b)=>b[1]-a[1]);
+
+  for(const [u,w] of arr){
+    const tr = document.createElement('tr');
+    const tdUser = document.createElement('td');
+    const span = document.createElement('span');
+    span.className = 'leader-user';
+    span.dataset.username = u;
+    span.textContent = u;
+    span.style.cursor = 'pointer';
+    tdUser.appendChild(span);
+
+    const tdNet = document.createElement('td');
+    tdNet.textContent = `${w.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+
+    tr.appendChild(tdUser);
+    tr.appendChild(tdNet);
+    leaderboardBody.appendChild(tr);
+  }
+}
+
+// ----- Start Game -----
+function startGame(){
+  const n = username.value.trim(); 
+  if(!n){ alert('Enter a username'); return; }
+  
+  user = n; 
+  username.disabled = true; 
+  startBtn.disabled = true;
+  
+  if(!(user in leaderboard)) leaderboard[user] = balance;
+  if(!(user in tradeHistory)) tradeHistory[user] = [];
+  
+  localStorage.setItem('lb', JSON.stringify(leaderboard));
+  
+  // Initialize scenario system
+  if (typeof initScenarioSystem === 'function') {
+    initScenarioSystem();
+  }
+  
+  refreshUI();
+}
+
+// ----- Trade -----
+function trade(comp, buy){
+  if(!user){ alert('Start the simulation first'); return; }
+  
+  const qty = 1; 
+  const price = history[comp][history[comp].length-1];
+  
+  if(buy){ 
+    if(balance < price * qty){ alert('Insufficient funds'); return; } 
+    balance -= price * qty; 
+    shares[comp] += qty; 
+    tradeHistory[user].push({type:"BUY", company:comp, price, qty, day:dayPlayed});
+  }
+  else{ 
+    if(shares[comp] < qty){ alert('Not enough shares'); return; } 
+    balance += price * qty; 
+    shares[comp] -= qty; 
+    tradeHistory[user].push({type:"SELL", company:comp, price, qty, day:dayPlayed});
+  } 
+  
+  refreshUI();
+}
+
+// ----- Next Day -----
+function nextDay(){
+  if(!user){ alert('Start the simulation first'); return; }
+  if(dayPlayed >= TOTAL_DAYS){ finish(); return; }
+  
+  // Increment day first
+  dayPlayed++;
+  
+  // Apply market changes
+  for(const c in COMPANIES){
+    const last = history[c][history[c].length-1];
+    const newPrice = rndDelta(last);
+    history[c].push(newPrice);
+    
+    ohlc[c].push({
+      o: last, 
+      h: Math.max(last, newPrice) + Math.random() * 5, 
+      l: Math.min(last, newPrice) - Math.random() * 5, 
+      c: newPrice
+    });
+  }
+  
+  refreshUI();
+  
+  // Check for crisis events (after UI refresh)
+  if (typeof checkCrisisEvent === 'function') {
+    checkCrisisEvent(dayPlayed);
+  }
+}
+
+// ----- Finish Game -----
+function finish() {
+  const netWorth = balance + Object.keys(shares).reduce((s,c)=>s+shares[c]*history[c][history[c].length-1],0);
+  
+  // Update leaderboard
+  leaderboard[user] = netWorth;
+  localStorage.setItem('lb', JSON.stringify(leaderboard));
+  refreshLeader();
+  
+  // Show endgame message with scenario system
+  if (typeof showEndgameMessage === 'function') {
+    setTimeout(() => {
+      showEndgameMessage(netWorth);
+    }, 500);
+  } else {
+    // Fallback if scenario system not loaded
+    alert(`Game Over! Final Net Worth: ${netWorth.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`);
+  }
+}
+
+// ----- Draw Chart -----
+function drawChart(){
+  if(chart){ chart.destroy(); chart = null; }
+  
+  const type = selChart.value;
+  let datasets = [], labels = [];
+  
+  if(currentCompany){
+    labels = history[currentCompany].map((_, i) => `Day ${i + 1}`);
+    if(type === 'line'){
+      datasets = [{ 
+        label: currentCompany, 
+        data: history[currentCompany], 
+        borderColor: COLORS[Object.keys(COMPANIES).indexOf(currentCompany) % COLORS.length], 
+        backgroundColor: 'transparent', 
+        tension: 0.15 
+      }];
+    } else if(type === 'candlestick'){
+      datasets = [{ 
+        label: currentCompany, 
+        data: ohlc[currentCompany], 
+        type: 'candlestick' 
+      }];
+      labels = undefined;
+    }
+  } else {
+    labels = Array.from({length: history[Object.keys(COMPANIES)[0]].length}, (_, i) => `Day ${i + 1}`);
+    let i = 0;
+    for(const c in COMPANIES){
+      datasets.push({ 
+        label: c, 
+        data: history[c], 
+        borderColor: COLORS[i % COLORS.length], 
+        backgroundColor: 'transparent', 
+        tension: 0.15 
+      });
+      i++;
+    }
+  }
+
+  chart = new Chart(ctx, { 
+    type: type === 'line' ? 'line' : 'candlestick', 
+    data: {labels, datasets}, 
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: {
+          position: 'right', 
+          labels: {
+            boxWidth: 10,
+            font: {size: 10}
+          }
+        } 
+      },
+      scales: { 
+        x: { 
+          grid: {color: 'rgba(255,255,255,0.12)'}, 
+          ticks: {color: 'white'} 
+        }, 
+        y: { 
+          grid: {color: 'rgba(255,255,255,0.12)'}, 
+          ticks: {color: 'white'} 
+        } 
+      }
+    }
+  });
+}
+
+// ----- Modal Functions -----
+function showModal() {
+  const modal = document.getElementById('scenarioModal');
+  const content = modal.querySelector('.scenario-content');
+  
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  setTimeout(() => content.focus(), 100);
+}
+
+function hideModal() {
+  const modal = document.getElementById('scenarioModal');
+  
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  startBtn.focus();
+}
+
+// ----- Event Listeners -----
+document.addEventListener('DOMContentLoaded', () => {
+  // Get DOM elements
+  companyList = document.getElementById('companyList');
+  balLbl = document.getElementById('balLbl');
+  dayLbl = document.getElementById('dayLbl');
+  startBtn = document.getElementById('startBtn');
+  username = document.getElementById('username');
+  nextDayBtn = document.getElementById('nextDay');
+  selChart = document.getElementById('selChart');
+  leaderboardBody = document.querySelector('#leaderboard tbody');
+  allGraphBtn = document.getElementById('allGraphBtn');
+  const canvas = document.getElementById('chart'); 
+  ctx = canvas.getContext('2d');
+
+  // Modal elements
+  const modal = document.getElementById('scenarioModal');
+  const modalStart = document.getElementById('scenarioStart');
+  const modalClose = document.getElementById('scenarioClose');
+  const modalCancel = document.getElementById('scenarioCancel');
+
+  // Build initial UI
+  buildCompanyRows();
+  refreshUI();
+
+  // Modal event listeners
+  if (startBtn && modal && modalStart && modalClose) {
+    startBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      showModal();
+    });
+
+    modalStart.addEventListener('click', function() {
+      hideModal();
+      applyScenarioCrash(0.5);
+      startGame();
+    });
+
+    modalClose.addEventListener('click', hideModal);
+    if (modalCancel) {
+      modalCancel.addEventListener('click', hideModal);
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) hideModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('show')) {
+        hideModal();
+      }
+    });
+  }
+
+  // Game event listeners
+  nextDayBtn.addEventListener('click', nextDay);
+  selChart.addEventListener('change', drawChart);
+  allGraphBtn.addEventListener('click', () => {
+    currentCompany = null; 
+    drawChart();
+  });
+
+  document.getElementById('resetLeaderboard').addEventListener('click', () => {
+    if(confirm('Reset leaderboard?')){ 
+      leaderboard = {}; 
+      localStorage.removeItem('lb'); 
+      refreshLeader(); 
+      alert('Leaderboard reset!'); 
+    }
+  });
+
+  username.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      startBtn.click();
+    }
+  });
+});
+</script>
+<script src="transactions.js"></script>
+</body>
+</html>
