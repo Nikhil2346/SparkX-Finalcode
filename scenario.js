@@ -141,7 +141,7 @@ function startNewsTicker() {
   
   // Create continuous scrolling text with all messages separated by |
   function createContinuousTickerText() {
-    return TICKER_MESSAGES.join(' | ') + ' | '; // Add extra separator at the end
+    return TICKER_MESSAGES.join('    |    ') + '    |    '; // Add extra separator at the end
   }
   
   // Set the continuous ticker text
