@@ -21,16 +21,19 @@ const CRISIS_EVENTS = {
 
 // News Ticker Messages
 const TICKER_MESSAGES = [
-  "📉 Dow Jones drops 777 points in single session",
-  "🏦 Bear Stearns acquired by JPMorgan for $2 per share",
-  "💰 AIG receives $85 billion government bailout",
-  "🏠 Foreclosure rates hit record highs nationwide",
-  "📊 Unemployment rises to 6.1%, highest in 5 years",
-  "💳 Credit markets remain frozen as banks hoard cash",
-  "🌍 Crisis spreads globally as European banks report losses",
-  "📈 Oil prices volatile amid economic uncertainty",
-  "🏛️ Fed cuts interest rates to near zero",
-  "💼 Major corporations announce massive layoffs"
+  "Dow Jones drops 777 points in single session",
+  "Bear Stearns acquired by JPMorgan for $2 per share",
+  "A New Phase in Finance Crisis as Investors Run to Safety - NYT",
+  "AIG receives $85 billion government bailout",
+  "Foreclosure rates hit record highs nationwide",
+  "Worst Crisis Since 1930s, with No End Yet in Sight - WSJ",
+  "Unemployment rises to 6.1%, highest in 5 years",
+  "Credit markets remain frozen as banks hoard cash",
+  "U.S. Loses 533,000 Jobs in Biggest Drop Since 1974 - NYT",
+  "Crisis spreads globally as European banks report losses",
+  "Oil prices volatile amid economic uncertainty",
+  "Major corporations announce massive layoffs",
+  "Europe cuts interest rate to 3.25% - The Times"
 ];
 
 // DOM Elements
@@ -135,19 +138,21 @@ function hideCrashTint() {
 // Start news ticker
 function startNewsTicker() {
   const tickerText = document.getElementById('ticker-text');
-  let messageIndex = 0;
   
-  function updateTicker() {
-    const message = TICKER_MESSAGES[messageIndex];
-    tickerText.textContent = message;
-    messageIndex = (messageIndex + 1) % TICKER_MESSAGES.length;
+  // Create continuous scrolling text with all messages separated by |
+  function createContinuousTickerText() {
+    return TICKER_MESSAGES.join(' | ') + ' | '; // Add extra separator at the end
   }
   
-  // Initial message
-  updateTicker();
+  // Set the continuous ticker text
+  tickerText.textContent = createContinuousTickerText();
   
-  // Update every 8 seconds
-  setInterval(updateTicker, 8000);
+  // Optional: Update the ticker content periodically to add variety
+  setInterval(() => {
+    // Shuffle the messages occasionally for variety
+    const shuffled = [...TICKER_MESSAGES].sort(() => Math.random() - 0.5);
+    tickerText.textContent = shuffled.join(' | ') + ' | ';
+  }, 120000); // Shuffle every 2 minutes
 }
 
 // Check for crisis events on day change
@@ -208,22 +213,24 @@ function applyMarketShock(multiplier) {
   }
 }
 
-// Show endgame message
-function showEndgameMessage(finalNetWorth) {
+// Show endgame message - updated to handle profit/loss
+function showEndgameMessage(finalBalance, profitLoss) {
   let message, title;
   
-  if (finalNetWorth > 15000) {
+  const profitSign = profitLoss >= 0 ? '+' : '';
+  
+  if (profitLoss > 5000) {
     title = "🎯 Crisis Survivor";
-    message = `Incredible! You navigated the 2008 financial crisis and emerged with $${finalNetWorth.toLocaleString()}. Your strategic trading during one of history's worst market crashes proves you have what it takes to thrive in chaos.`;
-  } else if (finalNetWorth > 10000) {
+    message = `Incredible! You navigated the 2008 financial crisis with a profit of ${profitSign}$${profitLoss.toLocaleString()}. Your strategic trading during one of history's worst market crashes proves you have what it takes to thrive in chaos.`;
+  } else if (profitLoss > 0) {
     title = "💪 Steady Hand";
-    message = `Well done! You weathered the storm and finished with $${finalNetWorth.toLocaleString()}. While others panicked, you kept your composure and preserved your capital during the market meltdown.`;
-  } else if (finalNetWorth > 5000) {
+    message = `Well done! You weathered the storm and made a profit of ${profitSign}$${profitLoss.toLocaleString()}. While others panicked, you kept your composure and preserved your capital during the market meltdown.`;
+  } else if (profitLoss > -5000) {
     title = "📉 Bruised but Breathing";
-    message = `You survived with $${finalNetWorth.toLocaleString()}. The 2008 crisis was brutal, but you managed to keep your head above water. Many weren't so fortunate during this historic market collapse.`;
+    message = `You lost $${Math.abs(profitLoss).toLocaleString()}, but survived the 2008 crisis. The market was brutal, but you managed to keep most of your capital intact. Many weren't so fortunate during this historic market collapse.`;
   } else {
     title = "💥 Casualty of Crisis";
-    message = `The crisis hit hard, leaving you with just $${finalNetWorth.toLocaleString()}. Don't feel bad - even seasoned Wall Street veterans lost billions during the 2008 financial meltdown. Learn from this experience!`;
+    message = `The crisis hit hard, with losses of $${Math.abs(profitLoss).toLocaleString()}. Don't feel bad - even seasoned Wall Street veterans lost billions during the 2008 financial meltdown. Learn from this experience!`;
   }
   
   // Create and show endgame modal
@@ -233,7 +240,10 @@ function showEndgameMessage(finalNetWorth) {
     <div class="headline-content endgame-content">
       <h2>${title}</h2>
       <p>${message}</p>
-      <p class="endgame-stats"><strong>Final Net Worth: $${finalNetWorth.toLocaleString()}</strong></p>
+      <div class="endgame-stats">
+        <div><strong>Final Balance: $${finalBalance.toLocaleString()}</strong></div>
+        <div><strong>Total Profit/Loss: ${profitSign}$${profitLoss.toLocaleString()}</strong></div>
+      </div>
       <div class="endgame-actions">
         <button onclick="location.reload()" class="headline-btn">Play Again</button>
         <button onclick="showLeaderboard()" class="headline-btn secondary">View Leaderboard</button>
