@@ -26,9 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Leaderboard modal functionality
 leaderboardBtn.addEventListener('click', () => {
+  // Get leaderboard data from localStorage or global variable
+  const currentLeaderboard = (typeof window.leaderboard !== 'undefined') 
+    ? window.leaderboard 
+    : JSON.parse(localStorage.getItem('lb')||'{}');
+  
   // Populate modal leaderboard
   modalLeaderboardBody.innerHTML = '';
-  const arr = Object.entries(leaderboard).sort((a,b)=>b[1]-a[1]);
+  const arr = Object.entries(currentLeaderboard).sort((a,b)=>b[1]-a[1]);
 
   for(const [u,profitLoss] of arr){
     const tr = document.createElement('tr');
@@ -80,7 +85,9 @@ resetLeaderboardModal.addEventListener('click', () => {
 });
 
   // Delegated click listener for leaderboard rows
+  
   leaderboard.addEventListener('click', (e) => {
+    const currentLeaderboard = (typeof leaderboard !== 'undefined') ? leaderboard : JSON.parse(localStorage.getItem('lb')||'{}');
     const row = e.target.closest('tr');
     if (!row) return;
 
