@@ -16,7 +16,7 @@ html, body, #app { height:100%; width:100%; background:var(--bg); color:var(--te
 
 #app{ display:flex; gap:20px; padding:20px; }
 
-#left{ width:300px; display:flex; flex-direction:column; }
+#left{ width: 280px; display:flex; flex-direction:column; flex-shrink: 0; }
 
 .start-row{ display:flex; gap:10px; margin-bottom:15px; }
 .start-row input{ flex:1; padding:8px; border-radius:6px; border:1px solid #333; background:#111; color:var(--text); font-size:16px; }
@@ -27,11 +27,52 @@ html, body, #app { height:100%; width:100%; background:var(--bg); color:var(--te
 
 #companyList{ display:flex; flex-direction:column; gap:10px; }
 
-.compRow{
-  display:flex; align-items:center;
-  padding:8px 10px; border-radius:8px; background:var(--card); box-shadow:0 4px 8px var(--shadow);
+.compRow {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 4px 8px var(--shadow);
   transition: transform 0.2s;
+  gap: 8px;
+  min-height: 50px;
 }
+
+.compRow .abbr {
+  width: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.compRow .price {
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.compRow .qty-controls {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.compRow .trade-buttons {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.compRow .shares {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-left: auto;
+  min-width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
 .compRow:hover{ transform: translateY(-2px); }
 
 .colorBox{
