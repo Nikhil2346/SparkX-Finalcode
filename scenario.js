@@ -2,17 +2,17 @@
 
 // Crisis Events Configuration
 const CRISIS_EVENTS = {
-  5: {
+  3: {
     headline: "🏠 Housing Bubble Bursts",
     body: "Subprime mortgage crisis triggers massive foreclosures. Major banks report billions in losses as housing prices plummet nationwide.",
-    priceShock: 0.85 // 15% drop
+    priceShock: 0.80 // 15% drop
   },
-  10: {
+  6: {
     headline: "🏛️ Lehman Brothers Collapses",
     body: "Investment banking giant Lehman Brothers files for bankruptcy. Credit markets freeze as panic spreads through Wall Street.",
     priceShock: 0.70 // 30% drop
   },
-  15: {
+  9: {
     headline: "💸 Government Bailout Package",
     body: "Federal Reserve announces emergency $700 billion bailout package. Markets show signs of stabilization but uncertainty remains high.",
     priceShock: 1.15 // 15% recovery
