@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const tableBody = document.querySelector('#transaction-table tbody');
   const modalClose = document.getElementById('modal-close');
   const leaderboard = document.querySelector('#leaderboard tbody');
+  const leaderboardBtn = document.getElementById('leaderboardBtn');
+  const leaderboardModal = document.getElementById('leaderboard-modal');
+  const leaderboardModalClose = document.getElementById('leaderboard-modal-close');
+  const modalLeaderboardBody = document.getElementById('modal-leaderboard-body');
+  const resetLeaderboardModal = document.getElementById('reset-leaderboard-modal');
 
   function closeModal() {
     modal.classList.remove('show');
@@ -18,6 +23,61 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
   });
+
+  // Leaderboard modal functionality
+leaderboardBtn.addEventListener('click', () => {
+  // Populate modal leaderboard
+  modalLeaderboardBody.innerHTML = '';
+  const arr = Object.entries(leaderboard).sort((a,b)=>b[1]-a[1]);
+
+  for(const [u,profitLoss] of arr){
+    const tr = document.createElement('tr');
+    const tdUser = document.createElement('td');
+    const span = document.createElement('span');
+    span.className = 'leader-user';
+    span.dataset.username = u;
+    span.textContent = u;
+    span.style.cursor = 'pointer';
+    span.style.color = 'var(--primary)';
+    span.style.fontWeight = '600';
+    tdUser.appendChild(span);
+
+    const tdProfit = document.createElement('td');
+    const profitClass = profitLoss >= 0 ? 'profit-positive' : 'profit-negative';
+    const profitSign = profitLoss >= 0 ? '+' : '';
+    tdProfit.className = profitClass;
+    tdProfit.style.textAlign = 'right';
+    tdProfit.textContent = `${profitSign}$${profitLoss.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+
+    tr.appendChild(tdUser);
+    tr.appendChild(tdProfit);
+    modalLeaderboardBody.appendChild(tr);
+  }
+  
+  leaderboardModal.classList.add('show');
+  leaderboardModal.classList.remove('hidden');
+});
+
+leaderboardModalClose.addEventListener('click', () => {
+  leaderboardModal.classList.remove('show');
+  leaderboardModal.classList.add('hidden');
+});
+
+leaderboardModal.addEventListener('click', (e) => {
+  if (e.target === leaderboardModal) {
+    leaderboardModal.classList.remove('show');
+    leaderboardModal.classList.add('hidden');
+  }
+});
+
+resetLeaderboardModal.addEventListener('click', () => {
+  if(confirm('Reset leaderboard?')){ 
+    leaderboard = {}; 
+    localStorage.removeItem('lb'); 
+    modalLeaderboardBody.innerHTML = '';
+    alert('Leaderboard reset!'); 
+  }
+});
 
   // Delegated click listener for leaderboard rows
   leaderboard.addEventListener('click', (e) => {
