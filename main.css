@@ -136,6 +136,52 @@ body.modal-open { overflow: hidden; touch-action: none; }
 }
 #resetLeaderboard:hover{ background:#ff2222; }
 
+#leaderboard-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+#leaderboard-modal.show {
+  display: flex;
+}
+
+#leaderboard-modal .modal-content {
+  background: #1f2128;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  color: #fff;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+#leaderboard-modal h2 {
+  margin-bottom: 16px;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+#leaderboard-modal #modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+
 #right{ flex:1; display:flex; flex-direction:column; gap:12px; }
 
 .controls{ height:40px; }
