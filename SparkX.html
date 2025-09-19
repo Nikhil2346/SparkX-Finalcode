@@ -261,9 +261,9 @@
 
 html, body, #app { height:100%; width:100%; background:var(--bg); color:var(--text); }
 
-#app{ display:flex; gap:20px; padding:20px; padding-bottom: 56px; /* Space for ticker */ }
+#app{ display:flex; gap:20px; padding:20px; padding-bottom: 56px; overflow-x: hidden; /* Space for ticker */ }
 
-#left{ width:300px; display:flex; flex-direction:column; }
+#left{ width:320px; display:flex; flex-direction:column; flex-shrink: 0; }
 
 .start-row{ display:flex; gap:10px; margin-bottom:15px; }
 .start-row input{ flex:1; padding:8px; border-radius:6px; border:1px solid #333; background:#111; color:var(--text); font-size:16px; }
@@ -274,47 +274,121 @@ html, body, #app { height:100%; width:100%; background:var(--bg); color:var(--te
 
 #companyList{ display:flex; flex-direction:column; gap:10px; }
 
-.compRow{
-  display:flex; align-items:center;
-  padding:8px 10px; border-radius:8px; background:var(--card); box-shadow:0 4px 8px var(--shadow);
+.compRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 4px 8px var(--shadow);
   transition: transform 0.2s;
+  margin-bottom: 8px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
+
+.compRow:hover{ 
+  transform: translateY(-2px); 
+}
+
+.compRow .colorBox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .compRow .abbr {
-  width: 50px;
+  width: 40px;
   cursor: pointer;
   font-weight: 600;
   flex-shrink: 0;
+  font-size: 13px;
 }
 
 .compRow .price {
   font-weight: 600;
-  font-size: 14px;
-  min-width: 80px;
+  font-size: 13px;
+  width: 55px;
   flex-shrink: 0;
 }
 
 .compRow .qty-controls {
-  margin: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
   flex-shrink: 0;
 }
 
-.compRow .trade-buttons {
+.qty-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--text);
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  font-size: 8px;
+  cursor: pointer;
   display: flex;
-  gap: 6px;
-  margin-right: 8px;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.qty-btn:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.4);
+}
+
+.qty-display {
+  min-width: 12px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  user-select: none;
+}
+
+.compRow .buy, .compRow .sell {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: 0.3s;
+  font-size: 11px;
   flex-shrink: 0;
+}
+
+.compRow .buy {
+  background: var(--accent);
+  color: #000;
+}
+
+.compRow .buy:hover {
+  filter: brightness(1.1);
+}
+
+.compRow .sell {
+  background: var(--sell);
+  color: #000;
+}
+
+.compRow .sell:hover {
+  filter: brightness(1.1);
 }
 
 .compRow .shares {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-left: auto;
-  min-width: 30px;
+  min-width: 20px;
   text-align: right;
   flex-shrink: 0;
 }
-
-.compRow:hover{ transform: translateY(-2px); }
 
 .colorBox{
   width:16px; height:16px; border-radius:4px; margin-right:6px; cursor:pointer;
@@ -541,18 +615,38 @@ body.modal-open {
 }
 #resetLeaderboard:hover{ background:#ff2222; }
 
-#right{ flex:1; display:flex; flex-direction:column; gap:12px; }
+#right{ 
+  flex:1; 
+  display:flex; 
+  flex-direction:column; 
+  gap:12px; 
+  min-width: 0; /* Allow flex item to shrink below content size */
+  overflow: hidden; /* Prevent content from overflowing */
+}
 
 .controls{ height:40px; }
 .controls select{ padding:8px; border-radius:6px; border:1px solid #333; background:#111; color:var(--text); font-size:15px; }
 
-#chartWrap{ flex:1; min-height:480px; background:var(--card); border-radius:12px; padding:10px; box-shadow:0 4px 12px var(--shadow); }
+#chartWrap{ 
+  flex:1; 
+  min-height:480px; 
+  background:var(--card); 
+  border-radius:12px; 
+  padding:10px; 
+  box-shadow:0 4px 12px var(--shadow);
+  position: relative;
+  z-index: 1;
+}
 
 canvas{ width:100%; height:100%; }
 
 @media(max-width:900px){
-  #app{ flex-direction:column; }
+  #app{ flex-direction:column; overflow-x: visible; }
   #left{ width:100%; }
+  
+  .compRow {
+    margin-bottom: 10px;
+  }
 }
 </style>
 </head>
@@ -605,11 +699,8 @@ canvas{ width:100%; height:100%; }
 
   <main id="right">
     <div class="controls">
-      <select id="selChart">
-        <option value="line">Line Chart</option>
-        <option value="candlestick">Candlestick Chart</option>
-      </select>
-    </div>
+  <label style="color: var(--text); font-weight: 600; font-size: 16px;">Line Chart</label>
+</div>
     <div id="chartWrap">
       <canvas id="chart"></canvas>
     </div>
@@ -666,7 +757,7 @@ const ABBR = {
 };
 
 const START_BALANCE = 10000;
-const TOTAL_DAYS = 20;
+const TOTAL_DAYS = 12;
 const PREV_DAYS = 6;
 const COLORS = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#00cc66','#ff6600'];
 
@@ -714,6 +805,7 @@ window.applyMarketShock = applyScenarioCrash;
 // ----- State -----
 let history={}, shares={}, balance=START_BALANCE, dayPlayed=0, user=null, currentCompany=null, ohlc={}, tradeHistory={};
 let leaderboard = JSON.parse(localStorage.getItem('lb')||'{}');
+window.leaderboard = leaderboard; // Make leaderboard globally accessible
 let tradeQuantities = {}; // Track quantity for each company
 
 // Initialize data
@@ -728,7 +820,7 @@ for(const k in COMPANIES){
 }
 
 // ----- DOM Elements -----
-let companyList, balLbl, dayLbl, startBtn, username, nextDayBtn, selChart, leaderboardBody, allGraphBtn, ctx, chart=null;
+let companyList, balLbl, dayLbl, startBtn, username, nextDayBtn, leaderboardBody, allGraphBtn, ctx, chart=null;
 
 // ----- Build Company Rows -----
 function buildCompanyRows(){
@@ -738,22 +830,25 @@ function buildCompanyRows(){
     const row = document.createElement('div'); 
     row.className='compRow';
 
+    // Color box
     const colorBox = document.createElement('div'); 
     colorBox.className='colorBox'; 
     colorBox.style.background=COLORS[i%COLORS.length];
     colorBox.addEventListener('click',()=>{currentCompany=c; drawChart();});
 
+    // Company abbreviation
     const abbr = document.createElement('div'); 
     abbr.className='abbr'; 
     abbr.textContent=ABBR[c];
     abbr.addEventListener('click',()=>{currentCompany=c; drawChart();});
 
+    // Price
     const price = document.createElement('div'); 
     price.className='price'; 
     price.dataset.company=c; 
     price.textContent = history[c][history[c].length-1].toFixed(2);
 
-    // Quantity controls
+    // Quantity controls container
     const qtyControls = document.createElement('div');
     qtyControls.className = 'qty-controls';
     
@@ -774,28 +869,26 @@ function buildCompanyRows(){
     
     qtyControls.append(downBtn, qtyDisplay, upBtn);
 
-    // Trade buttons container
-    const tradeButtons = document.createElement('div');
-    tradeButtons.className = 'trade-buttons';
-
+    // Buy button
     const buy = document.createElement('button'); 
     buy.className='buy'; 
     buy.textContent='Buy'; 
     buy.addEventListener('click',()=>trade(c,true));
 
+    // Sell button
     const sell = document.createElement('button'); 
     sell.className='sell'; 
     sell.textContent='Sell'; 
     sell.addEventListener('click',()=>trade(c,false));
 
-    tradeButtons.append(buy, sell);
+    // Shares display
+    const shares = document.createElement('div');
+    shares.className = 'shares';
+    shares.id = `shares-${c}`;
+    shares.textContent = shares[c] || 0;
 
-    const sh = document.createElement('div');
-    sh.className = 'shares';
-    sh.id = `shares-${c}`;
-    sh.textContent = shares[c];
-
-    row.append(colorBox, abbr, price, qtyControls, tradeButtons, sh);
+    // Append all elements in correct order
+    row.append(colorBox, abbr, price, qtyControls, buy, sell, shares);
     companyList.append(row);
     i++;
   }
@@ -1082,27 +1175,18 @@ function finish() {
 function drawChart(){
   if(chart){ chart.destroy(); chart = null; }
   
-  const type = selChart.value;
+  const type = 'line';
   let datasets = [], labels = [];
   
   if(currentCompany){
     labels = history[currentCompany].map((_, i) => `Day ${i + 1}`);
-    if(type === 'line'){
-      datasets = [{ 
-        label: currentCompany, 
-        data: history[currentCompany], 
-        borderColor: COLORS[Object.keys(COMPANIES).indexOf(currentCompany) % COLORS.length], 
-        backgroundColor: 'transparent', 
-        tension: 0.15 
-      }];
-    } else if(type === 'candlestick'){
-      datasets = [{ 
-        label: currentCompany, 
-        data: ohlc[currentCompany], 
-        type: 'candlestick' 
-      }];
-      labels = undefined;
-    }
+    datasets = [{ 
+  label: currentCompany, 
+  data: history[currentCompany], 
+  borderColor: COLORS[Object.keys(COMPANIES).indexOf(currentCompany) % COLORS.length], 
+  backgroundColor: 'transparent', 
+  tension: 0.15 
+}];
   } else {
     labels = Array.from({length: history[Object.keys(COMPANIES)[0]].length}, (_, i) => `Day ${i + 1}`);
     let i = 0;
@@ -1118,10 +1202,10 @@ function drawChart(){
     }
   }
 
-  chart = new Chart(ctx, { 
-    type: type === 'line' ? 'line' : 'candlestick', 
-    data: {labels, datasets}, 
-    options: {
+  chart = new Chart(ctx, 
+  { type: 'line', data: {labels, datasets}, 
+  
+  options: {  
       responsive: true,
       maintainAspectRatio: false,
       plugins: { 
@@ -1176,7 +1260,6 @@ document.addEventListener('DOMContentLoaded', () => {
   startBtn = document.getElementById('startBtn');
   username = document.getElementById('username');
   nextDayBtn = document.getElementById('nextDay');
-  selChart = document.getElementById('selChart');
   leaderboardBody = document.querySelector('#leaderboard tbody');
   allGraphBtn = document.getElementById('allGraphBtn');
   const canvas = document.getElementById('chart'); 
@@ -1223,7 +1306,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Game event listeners
   nextDayBtn.addEventListener('click', nextDay);
-  selChart.addEventListener('change', drawChart);
   allGraphBtn.addEventListener('click', () => {
     currentCompany = null; 
     drawChart();
